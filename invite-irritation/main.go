@@ -122,34 +122,31 @@ func fetchApiKey() (string, error) {
 func sendRequests(user user, target string, requestCount int) error {
 	client := &http.Client{}
 
-	json := []byte(`{"messageSlot": 0}`)
-
-	request, _ := http.NewRequest("POST", RequestInviteEndpoint+target, bytes.NewBuffer(json))
-	request.Header.Set("Cookie", "apiKey="+user.apiKey+"; auth="+user.authToken)
-	request.Header.Set("Content-Type", "application/json")
-
 	ticker := time.NewTicker(30 * time.Second)
 
 	requestsSent := 0
 	err := func() error {
 		for {
-			select {
-			case <-ticker.C:
-				response, err := client.Do(request)
-				if err != nil {
-					return err
-				}
+			<-ticker.C
+			json := []byte(`{"messageSlot": 0}`)
 
-				if response.StatusCode != 200 {
-					return fmt.Errorf("Unable to send request.")
-				}
+			request, _ := http.NewRequest("POST", RequestInviteEndpoint+target, bytes.NewBuffer(json))
+			request.Header.Set("Cookie", "apiKey="+user.apiKey+"; auth="+user.authToken)
+			request.Header.Set("Content-Type", "application/json")
+			response, err := client.Do(request)
+			if err != nil {
+				return err
+			}
 
-				fmt.Println("Sent request.")
+			if response.StatusCode != 200 {
+				return fmt.Errorf("Unable to send request.")
+			}
 
-				requestsSent++
-				if requestsSent >= requestCount {
-					return nil
-				}
+			fmt.Println("Sent request.")
+
+			requestsSent++
+			if requestsSent >= requestCount {
+				return nil
 			}
 		}
 	}()
