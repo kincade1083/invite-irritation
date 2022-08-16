@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"time"
 )
@@ -85,6 +86,16 @@ func main() {
 		userName: username,
 		password: password,
 	}
+
+	//Logout on ctrl + c.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		user.logOut()
+		os.Exit(1)
+	}()
+	//Logout on
 	defer user.logOut()
 
 	//Log in.
