@@ -26,6 +26,7 @@ type user struct {
 }
 
 func (u *user) authenticateUser() error {
+	fmt.Println("Logging in...")
 	client := &http.Client{}
 	request, err := http.NewRequest("GET", LoginEndpoint, nil)
 	request.SetBasicAuth(u.userName, u.password)
@@ -41,24 +42,25 @@ func (u *user) authenticateUser() error {
 	}
 	u.authToken = auth
 
+	fmt.Println("Logged in.")
 	return nil
 }
 
-func (u *user) logOut() error {
+func (u *user) logOut() {
+	fmt.Println("Logging out...")
 	client := &http.Client{}
 	request, err := http.NewRequest("PUT", LogoutEndpoint, nil)
 	request.Header.Set("Cookie", "auth="+u.authToken)
 
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	if response.StatusCode != 200 {
-		return fmt.Errorf("Unable to log out.")
+		panic(fmt.Errorf("Unable to log out."))
 	}
-
-	return nil
+	fmt.Println("Logged out.")
 }
 
 func main() {
@@ -83,6 +85,7 @@ func main() {
 		userName: username,
 		password: password,
 	}
+	defer user.logOut()
 
 	//Log in.
 	err = user.authenticateUser()
@@ -96,10 +99,6 @@ func main() {
 	}
 
 	//We've delivered our payload, let's get out of here.
-	err = user.logOut()
-	if err != nil {
-		panic(err)
-	}
 
 	fmt.Println("Finished sending requests")
 }
@@ -120,6 +119,7 @@ func fetchApiKey() (string, error) {
 }
 
 func sendRequests(user user, target string, requestCount int) error {
+	fmt.Println("Starting to send requests...")
 	client := &http.Client{}
 
 	ticker := time.NewTicker(30 * time.Second)
@@ -155,6 +155,7 @@ func sendRequests(user user, target string, requestCount int) error {
 		return err
 	}
 
+	fmt.Println("Finished sending requests.")
 	return nil
 }
 
